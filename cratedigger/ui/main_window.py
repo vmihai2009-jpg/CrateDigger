@@ -12,6 +12,7 @@ from .library_view import LibraryPage
 from .misc_pages import ActivityPage, SettingsPage
 from .playlist import PlaylistPage
 from .results import ResultsPage
+from .updates import UpdateController
 
 log = logging.getLogger(__name__)
 PAGES = ["dashboard", "playlist", "results", "library", "activity", "settings"]
@@ -87,6 +88,11 @@ class MainWindow(QMainWindow):
         self.timer.start(1000)
         self.nav.setCurrentRow(0)
         self.tick()
+
+        self.updates = UpdateController(svc, self)
+        self.settings_page.check_updates_requested.connect(lambda: self.updates.check(manual=True))
+        if svc.settings.check_updates:
+            QTimer.singleShot(4000, self.updates.check)
 
     # ------------------------------------------------------------ navigation
     def goto(self, name: str):
