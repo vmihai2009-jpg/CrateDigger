@@ -1,0 +1,4 @@
+Name = "CrateDigger Bridge"
+Version = "0.2.0"
+Authors = ["CrateDigger"]
+Description = """Lets the CrateDigger app run Soulseek searches through this Nicotine+ session and queue downloads you have explicitly authorised in CrateDigger. Communication is via files in ~/Library/Application Support/CrateDigger/bridge."""
