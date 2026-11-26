@@ -55,6 +55,32 @@ class Service:
     def import_csv(self, path: str | Path, name: str | None = None) -> ImportResult:
         return import_csv(self.db, path, self.settings, name)
 
+    def import_inbox(self) -> list[tuple[str, ImportResult | str]]:
+        """Import every playlist CSV another app (Minapp) dropped in the inbox folder, then move it to inbox/done
+        (or inbox/failed with the reason). Returns [(playlist name, result or error text)]."""
+        from datetime import datetime
+
+        from . import config
+        out: list[tuple[str, ImportResult | str]] = []
+        inbox = config.INBOX_DIR
+        if not inbox.is_dir():
+            return out
+        for f in sorted(inbox.glob("*.csv")):
+            try:
+                res = import_csv(self.db, f, self.settings, f.stem, reuse_playlist=True)
+                dest = inbox / "done"
+                out.append((f.stem, res))
+            except Exception as e:  # a bad file must not block the others
+                log.warning("Inbox import failed for %s: %s", f.name, e)
+                dest = inbox / "failed"
+                out.append((f.stem, str(e)))
+            try:
+                dest.mkdir(exist_ok=True)
+                f.replace(dest / f"{datetime.now():%Y%m%d-%H%M%S}-{f.name}")
+            except OSError as e:
+                log.warning("Could not move %s: %s", f.name, e)
+        return out
+
     # ================================================================ stats
     def stats(self) -> dict:
         q = self.db.scalar

@@ -18,6 +18,7 @@ APP_DIR = Path(os.environ.get("CRATEDIGGER_HOME", HOME / "Library" / "Applicatio
 DB_PATH = APP_DIR / "cratedigger.sqlite3"
 LOG_DIR = APP_DIR / "logs"
 BRIDGE_DIR = APP_DIR / "bridge"
+INBOX_DIR = APP_DIR / "inbox"          # other apps (Minapp) drop playlist CSVs here; they are imported automatically
 SETTINGS_PATH = APP_DIR / "settings.json"
 
 NICOTINE_DATA = HOME / ".local" / "share" / "nicotine"
@@ -85,5 +86,5 @@ class Settings:
 
 
 def ensure_dirs() -> None:
-    for d in (APP_DIR, LOG_DIR, BRIDGE_DIR / "requests", BRIDGE_DIR / "results"):
+    for d in (APP_DIR, LOG_DIR, INBOX_DIR, BRIDGE_DIR / "requests", BRIDGE_DIR / "results"):
         d.mkdir(parents=True, exist_ok=True)
