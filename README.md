@@ -31,6 +31,12 @@ This creates `.venv`, installs four dependencies (PySide6-Essentials, mutagen, r
 
 CrateDigger never sees your Soulseek password; searches run through your existing Nicotine+ session.
 
+## Receive playlists from Minapp
+
+In Minapp: menu → Export → CrateDigger → **Send everything to CrateDigger…** (or right-click a playlist → Port playlist →
+Crate Digger). Minapp drops one CSV per playlist into `~/Library/Application Support/CrateDigger/inbox/`; CrateDigger
+imports them within seconds (or at launch), moves them to `inbox/done/`, and a playlist sent again only adds new tracks.
+
 ## Workflow
 
 1. **Playlist → Import CSV** (Exportify-style Spotify export). Tracks are de-duplicated by Spotify URI/ISRC,

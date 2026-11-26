@@ -86,6 +86,10 @@ class MainWindow(QMainWindow):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.tick)
         self.timer.start(1000)
+        self.inbox_timer = QTimer(self)  # playlists sent from Minapp arrive as CSV files in the inbox folder
+        self.inbox_timer.timeout.connect(self.check_inbox)
+        self.inbox_timer.start(2000)
+        QTimer.singleShot(500, self.check_inbox)
         self.nav.setCurrentRow(0)
         self.tick()
 
@@ -119,6 +123,21 @@ class MainWindow(QMainWindow):
         self._dirty = True
         if self.stack.currentWidget() is self.dashboard:
             self.dashboard.refresh()
+
+    def check_inbox(self):
+        got = self.svc.import_inbox()
+        if not got:
+            return
+        ok = [(n, r) for n, r in got if not isinstance(r, str)]
+        bad = [(n, r) for n, r in got if isinstance(r, str)]
+        added = sum(r.added for _, r in ok)
+        msg = f"Received {len(ok)} playlist{'s' if len(ok) != 1 else ''} from Minapp ({added} new tracks)"
+        if bad:
+            msg += f"; {len(bad)} could not be read"
+        self.statusBar().showMessage(msg, 15000)
+        self.playlist.reload_playlists()
+        self._mark_dirty()
+        self.refresh_current()
 
     # ------------------------------------------------------------ polling loop
     def tick(self):

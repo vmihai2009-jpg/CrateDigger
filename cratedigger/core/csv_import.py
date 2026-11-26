@@ -88,14 +88,21 @@ def read_csv(path: Path) -> tuple[list[dict], list[str]]:
     return rows, errors
 
 
-def import_csv(db: Database, path: Path | str, settings, playlist_name: str | None = None) -> ImportResult:
+def import_csv(db: Database, path: Path | str, settings, playlist_name: str | None = None,
+               reuse_playlist: bool = False) -> ImportResult:
     path = Path(path)
     rows, errors = read_csv(path)
     name = playlist_name or path.stem
     added = updated = 0
     with db.tx() as c:
-        pid = c.execute("INSERT INTO playlists(name, source_path) VALUES (?,?)", (name, str(path))).lastrowid
-        for pos, rec in enumerate(rows):
+        prev = c.execute("SELECT id FROM playlists WHERE name=? ORDER BY id LIMIT 1", (name,)).fetchone() if reuse_playlist else None
+        if prev:  # sent again from another app: add what is new to the same playlist
+            pid = prev[0]
+            start = (c.execute("SELECT MAX(position) FROM playlist_tracks WHERE playlist_id=?", (pid,)).fetchone()[0] or -1) + 1
+        else:
+            pid = c.execute("INSERT INTO playlists(name, source_path) VALUES (?,?)", (name, str(path))).lastrowid
+            start = 0
+        for pos, rec in enumerate(rows, start=start):
             rec["genre_folder"] = genre_folder_for(rec.get("genres") or "", settings.genre_rules)
             rec["search_query"] = build_queries(rec["title"], rec["artists"])[0]
             existing = None

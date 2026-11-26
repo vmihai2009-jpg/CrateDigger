@@ -309,3 +309,29 @@ def test_download_retry_next_sharer(tmp_path):
     svc._download_event({"ev": "status", "id": f"d{c3}_c", "status": "Banned"})          # 3rd failure: stop
     assert db.scalar("SELECT COUNT(*) FROM candidates WHERE state='queued_download'") == 0
     assert db.scalar("SELECT status FROM tracks") == "review"
+
+
+def test_inbox_import_from_minapp(tmp_path, monkeypatch):
+    """Minapp drops playlist CSVs in the inbox: they are imported once, moved to done/, and a re-send adds to the same playlist."""
+    from cratedigger.core import config
+    from cratedigger.core.bridge import NicotineBridge
+    from cratedigger.core.config import Settings
+    from cratedigger.core.db import Database
+    from cratedigger.core.service import Service
+    inbox = tmp_path / "inbox"
+    inbox.mkdir()
+    monkeypatch.setattr(config, "INBOX_DIR", inbox)
+    svc = Service(Database(tmp_path / "i.sqlite3"), Settings(library_root=str(tmp_path / "lib")), NicotineBridge(tmp_path / "b", tmp_path / "p"))
+    head = "Track URI,Track Name,Album Name,Artist Name(s),Release Date,Duration (ms)\n"
+    (inbox / "Warm up.csv").write_text("﻿" + head + "spotify:track:a1,One,Alb,Artist A;Artist B,2020,180000\n", encoding="utf-8")
+    (inbox / "Broken.csv").write_text("nothing useful here\n", encoding="utf-8")
+    (inbox / "half.csv.part").write_text("ignored", encoding="utf-8")
+    got = dict(svc.import_inbox())
+    assert got["Warm up"].added == 1 and isinstance(got["Broken"], str)
+    assert not list(inbox.glob("*.csv")) and (inbox / "half.csv.part").exists()
+    assert len(list((inbox / "done").glob("*Warm up.csv"))) == 1 and len(list((inbox / "failed").iterdir())) == 1
+    (inbox / "Warm up.csv").write_text(head + "spotify:track:a1,One,Alb,Artist A;Artist B,2020,180000\nspotify:track:a2,Two,Alb,Artist C,2020,200000\n", encoding="utf-8")
+    svc.import_inbox()
+    assert svc.db.scalar("SELECT COUNT(*) FROM playlists") == 1
+    assert svc.db.scalar("SELECT COUNT(*) FROM tracks") == 2
+    assert svc.db.scalar("SELECT COUNT(*) FROM playlist_tracks") == 2
