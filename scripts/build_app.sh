@@ -14,7 +14,8 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$RES/app"
 
 # 1. code
-rsync -a --exclude __pycache__ cratedigger nicotine_plugin "$RES/app/"
+rsync -a --exclude __pycache__ cratedigger nicotine_plugin requirements.txt "$RES/app/"
+VERSION=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' cratedigger/__init__.py)
 # 2. private Python environment
 "$PY" -m venv "$RES/venv"
 "$RES/venv/bin/pip" install -q --upgrade pip
@@ -45,8 +46,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleName</key><string>CrateDigger</string>
   <key>CFBundleDisplayName</key><string>CrateDigger</string>
   <key>CFBundleIdentifier</key><string>local.cratedigger.app</string>
-  <key>CFBundleVersion</key><string>0.1.0</string>
-  <key>CFBundleShortVersionString</key><string>0.1.0</string>
+  <key>CFBundleVersion</key><string>$VERSION</string>
+  <key>CFBundleShortVersionString</key><string>$VERSION</string>
   <key>CFBundleExecutable</key><string>CrateDigger</string>
   <key>CFBundleIconFile</key><string>CrateDigger</string>
   <key>CFBundlePackageType</key><string>APPL</string>

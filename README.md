@@ -138,3 +138,19 @@ Covers matching edge cases, quality flags, audio analysis on generated genuine/t
 files, CSV import, and an end-to-end run of the real plugin code with simulated network messages
 (search → results → duplicate detection → authorisation gate → download progress → analysis → approval →
 tagging → Rekordbox XML).
+
+## Updates
+
+CrateDigger checks this repository's [Releases](https://github.com/vmihai2009-jpg/CrateDigger/releases) a few
+seconds after it starts. When a newer version is published it asks whether to **Install and restart**, wait until
+**Later**, or **Skip this version**. Installing downloads the release's code, checks it is the version it claims to be,
+and replaces the code inside `CrateDigger.app`. Your database, settings, library and downloads are not touched. If
+anything goes wrong, the current version stays in place. You can turn the start-up check off, or check by hand, under
+**Settings → Updates**.
+
+To publish an update:
+1. Raise `__version__` in `cratedigger/__init__.py` (for example `0.2.0` → `0.2.1`) and merge that to `main`.
+2. On GitHub, open **Releases → Draft a new release**, create the tag `v0.2.1` (it must match, with a leading `v`),
+   write a few lines about what changed, and press **Publish release**.
+
+Apps built before 0.2.0 have no updater. Rebuild them once with `./scripts/build_app.sh --install`.

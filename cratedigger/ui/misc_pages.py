@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import json
 
+from PySide6.QtCore import Signal
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QFormLayout, QGroupBox, QLabel, QLineEdit, QMessageBox,
                                QPlainTextEdit, QPushButton, QSpinBox, QVBoxLayout, QWidget, QScrollArea)
 
+from .. import __version__
 from ..core.config import APP_DIR, DEFAULT_GENRE_RULES, LOG_DIR
 from ..core.logging_setup import LOG_FILE
 from .common import hbox, open_path
@@ -42,6 +44,8 @@ class ActivityPage(QWidget):
 
 
 class SettingsPage(QWidget):
+    check_updates_requested = Signal()
+
     def __init__(self, svc, on_saved, parent=None):
         super().__init__(parent)
         self.svc = svc
@@ -134,6 +138,16 @@ class SettingsPage(QWidget):
         f4.addRow(expl)
         lay.addWidget(g4)
 
+        g5 = QGroupBox("Updates")
+        f5 = QFormLayout(g5)
+        self.check_updates = QCheckBox("Check for updates when CrateDigger starts")
+        self.check_updates.setChecked(s.check_updates)
+        check_now = QPushButton("Check now")
+        check_now.clicked.connect(self.check_updates_requested.emit)
+        f5.addRow(self.check_updates)
+        f5.addRow(f"Installed version {__version__}", hbox(check_now, None))
+        lay.addWidget(g5)
+
         g3 = QGroupBox("Genre folder rules (JSON: [folder, [keywords…]], first match wins)")
         v3 = QVBoxLayout(g3)
         self.rules = QPlainTextEdit(json.dumps(s.genre_rules, indent=1))
@@ -194,6 +208,7 @@ class SettingsPage(QWidget):
         s.auto_basis = self.auto_basis.currentData() or ""
         s.auto_note = self.auto_note.text().strip()
         s.auto_min_score = self.auto_min.value()
+        s.check_updates = self.check_updates.isChecked()
         s.save()
         if turning_on:
             from .common import run_bg

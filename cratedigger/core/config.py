@@ -60,6 +60,9 @@ class Settings:
     auto_basis: str = ""
     auto_note: str = ""
     auto_min_score: int = 90
+    # Updates: check GitHub Releases at start-up; a version the user chose to skip is not offered again.
+    check_updates: bool = True
+    skipped_update: str = ""
 
     @classmethod
     def load(cls) -> "Settings":
